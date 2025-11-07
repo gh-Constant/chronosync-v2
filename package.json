@@ -1,0 +1,10 @@
+{
+  "name": "chronosync",
+  "private": true,
+  "scripts": {
+    "start:backend": "cd packages/backend && npm run start",
+    "dev:backend": "cd packages/backend && npm run dev",
+    "start:app": "cd packages/app && flutter run",
+    "build:app": "cd packages/app && flutter build"
+  }
+}
