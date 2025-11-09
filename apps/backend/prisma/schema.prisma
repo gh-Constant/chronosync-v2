@@ -1,0 +1,77 @@
+// apps/backend/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -- Modèles de l'application --
+
+model User {
+  id            String     @id @default(uuid())
+  email         String     @unique
+  password_hash String
+  username      String     @unique
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
+  timezone      String     @default("UTC")
+  goals         Goal[]
+  usageLogs     UsageLog[]
+
+  @@map("users") // Lie ce modèle à la table 'users'
+}
+
+model AppCategory {
+  id         Int        @id @default(autoincrement())
+  name       String
+  type       String // 'productive', 'entertainment', 'neutral'
+  icon       String?
+  created_at DateTime   @default(now())
+  goals      Goal[]
+  usageLogs  UsageLog[]
+
+  @@map("app_categories")
+}
+
+model Goal {
+  id                     String       @id @default(uuid())
+  user_id                String
+  title                  String
+  target_minutes_per_day Int?
+  category_id            Int?
+  start_date             DateTime?    @db.Date
+  end_date               DateTime?    @db.Date
+  status                 String       @default("active")
+  created_at             DateTime     @default(now())
+  user                   User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  category               AppCategory? @relation(fields: [category_id], references: [id])
+
+  @@map("goals")
+}
+
+model UsageLog {
+  time             DateTime
+  user_id          String
+  app_name         String
+  app_identifier   String
+  device_type      String // 'desktop', 'android'
+  platform         String?
+  duration_seconds Int
+  category_id      Int?
+  is_productive    Boolean  @default(false)
+  window_title     String?
+  url              String?
+  metadata         Json?
+
+  user     User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  category AppCategory? @relation(fields: [category_id], references: [id])
+
+  // IMPORTANT: C'est une table TimescaleDB.
+  // On définit une clé composite pour que Prisma puisse l'identifier.
+  @@id([time, user_id, app_identifier])
+  @@map("usage_logs")
+}

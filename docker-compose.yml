@@ -1,0 +1,67 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg17
+    container_name: chronosync-db
+    environment:
+      POSTGRES_USER: ${DB_USER:-chronosync}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-devpassword}
+      POSTGRES_DB: ${DB_NAME:-chronosync_dev}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - chronosync-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chronosync"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: ../../docker/backend.Dockerfile
+    container_name: chronosync-backend
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://${DB_USER:-chronosync}:${DB_PASSWORD:-devpassword}@postgres:5432/${DB_NAME:-chronosync_dev}
+      JWT_SECRET: ${JWT_SECRET:-dev_secret_change_in_prod}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/backend:/app
+      - /app/node_modules
+      - backend_logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - chronosync-network
+    command: pnpm run dev
+
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    container_name: chronosync-swagger
+    environment:
+      SWAGGER_JSON: /api-docs
+      BASE_URL: /docs
+    ports:
+      - "8080:8080"
+    networks:
+      - chronosync-network
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  backend_logs:
+
+networks:
+  chronosync-network:
+    driver: bridge

@@ -1,10 +1,23 @@
 {
   "name": "chronosync",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start:backend": "cd packages/backend && npm run start",
-    "dev:backend": "cd packages/backend && npm run dev",
-    "start:app": "cd packages/app && flutter run",
-    "build:app": "cd packages/app && flutter build"
-  }
+    "dev": "turbo run dev",
+    "dev:desktop": "pnpm --filter desktop dev",
+    "dev:backend": "pnpm --filter backend dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "docker:dev": "docker-compose up",
+    "docker:prod": "docker-compose -f docker-compose.prod.yml up"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "turbo": "^2.6.0",
+    "typescript": "^5.9.3"
+  },
+  "packageManager": "pnpm@10.15.0"
 }
