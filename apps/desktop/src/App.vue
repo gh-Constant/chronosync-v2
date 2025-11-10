@@ -14,17 +14,17 @@ import { appUsage, appIcons } from './services/window-tracker';
         </tr>
       </thead>
       <tbody>
-        <tr v-for="usage in appUsage" :key="usage.window">
+        <tr v-for="usage in appUsage" :key="usage.display">
           <td>
             <img
-              v-if="appIcons[usage.window]"
-              :src="appIcons[usage.window]"
+              v-if="appIcons[usage.process_name]"
+              :src="appIcons[usage.process_name]"
               alt="icon"
               class="app-icon"
             />
             <span v-else class="icon-placeholder"></span>
           </td>
-          <td>{{ usage.window }}</td>
+          <td>{{ usage.display }}</td>
           <td>{{ usage.duration.toFixed(2) }}</td>
         </tr>
       </tbody>

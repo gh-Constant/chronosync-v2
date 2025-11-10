@@ -1,57 +1,75 @@
-import { ref } from 'vue';
+import { ref, onUnmounted } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 
-export const appUsage = ref<{ window: string; duration: number }[]>([]);
+type AppUsage = {
+  display: string;
+  title: string;
+  process_name: string;
+  duration: number;
+};
+
+type ActiveWindowInfo = {
+  title: string;
+  process_name: string;
+  display: string;
+};
+
+export const appUsage = ref<AppUsage[]>([]);
 export const appIcons = ref<Record<string, string>>({});
 
-const activeWindow = ref('');
-const startTime = ref(Date.now());
+let lastActiveWindow: ActiveWindowInfo | null = null;
+let lastWindowChangeTime = Date.now();
 
-const fetchAppImage = async (title: string) => {
-  if (!title) return;
-  if (appIcons.value[title]) return; // already cached
+const intervalId = setInterval(async () => {
   try {
-    const dataUrl = (await invoke('get_app_image', { title })) as string;
-    if (dataUrl) appIcons.value = { ...appIcons.value, [title]: dataUrl };
-  } catch (e) {
-    // ignore errors for now
-    console.warn('failed to fetch app image', e);
-  }
-};
+    const activeWindow = await invoke<ActiveWindowInfo>('get_active_window');
 
-const trackWindow = async () => {
-  const currentWindow: string = await invoke('get_active_window');
+    if (activeWindow && activeWindow.display) {
+      // If the window has changed
+      if (!lastActiveWindow || activeWindow.display !== lastActiveWindow.display) {
+        const now = Date.now();
+        const duration = (now - lastWindowChangeTime) / 1000;
 
-  if (currentWindow !== activeWindow.value) {
-    const endTime = Date.now();
-    const duration = (endTime - startTime.value) / 1000;
+        // Update duration for the previous window
+        if (lastActiveWindow) {
+          const existingApp = appUsage.value.find(
+            (app) => app.display === lastActiveWindow!.display
+          );
+          if (existingApp) {
+            existingApp.duration += duration;
+          } else {
+            appUsage.value.push({
+              display: lastActiveWindow.display,
+              title: lastActiveWindow.title,
+              process_name: lastActiveWindow.process_name,
+              duration,
+            });
+          }
+        }
 
-    if (activeWindow.value) {
-      const existingApp = appUsage.value.find(
-        (app) => app.window === activeWindow.value
-      );
-      if (existingApp) {
-        existingApp.duration += duration;
-        // ensure icon is fetched
-        fetchAppImage(existingApp.window);
-      } else {
-        appUsage.value.push({
-          window: activeWindow.value,
-          duration,
-        });
-        // fetch icon for the newly added app
-        fetchAppImage(activeWindow.value);
+        // Reset for the new window
+        lastActiveWindow = activeWindow;
+        lastWindowChangeTime = now;
+
+        // Fetch icon for the new window if we haven't already
+        if (!appIcons.value[activeWindow.process_name]) {
+          console.log(`Fetching icon for: ${activeWindow.process_name}`);
+          invoke<string>('get_app_icon', { processName: activeWindow.process_name })
+            .then((icon) => {
+              console.log(`Icon fetched for: ${activeWindow.process_name}`);
+              appIcons.value[activeWindow.process_name] = icon;
+            })
+            .catch((err) => {
+              console.error(`Failed to fetch icon for ${activeWindow.process_name}:`, err);
+            });
+        }
       }
     }
-
-    // also prefetch icon for the new current window
-    fetchAppImage(currentWindow);
-
-    activeWindow.value = currentWindow;
-    startTime.value = Date.now();
+  } catch (error) {
+    console.error('Error getting active window:', error);
   }
-};
+}, 1000);
 
-export const startTracking = () => {
-  setInterval(trackWindow, 1000);
-};
+onUnmounted(() => {
+  clearInterval(intervalId);
+});
