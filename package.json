@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "turbo run dev",
+    "dev": "concurrently \"pnpm --filter backend dev\" \"pnpm --filter desktop run dev:tauri\"",
     "dev:desktop": "pnpm --filter desktop dev",
     "dev:backend": "pnpm --filter backend dev",
-    "build": "turbo run build",
+    "dev:tauri": "pnpm --filter desktop run dev:tauri",
+    "build": "pnpm --filter backend run build && pnpm --filter desktop run build:webview && pnpm --filter desktop run build:tauri",
     "test": "turbo run test",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
@@ -17,7 +18,8 @@
   "devDependencies": {
     "prettier": "^3.6.2",
     "turbo": "^2.6.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "concurrently": "^8.2.0"
   },
   "packageManager": "pnpm@10.15.0"
 }

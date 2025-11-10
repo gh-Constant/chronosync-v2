@@ -1,11 +1,8 @@
-import app from './app';
-import dotenv from 'dotenv';
+import { app } from './app.js';
+import { config } from './config';
 
-// Charger les variables d'environnement depuis la racine
-dotenv.config({ path: '../../.env' });
-
-const port = process.env.PORT || 3000;
+const port = config.port;
 
 app.listen(port, () => {
-    console.log(`[Backend] Serveur démarré sur http://localhost:${port}`);
+  console.log(`Server is running on http://localhost:${port}`);
 });

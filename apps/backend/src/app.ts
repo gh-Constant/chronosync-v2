@@ -1,18 +1,30 @@
 import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
+import { prisma } from './config/database.js';
 
 const app = express();
-
-app.use(helmet());
-app.use(cors({ origin: process.env.CORS_ORIGIN?.split(',') || '*' }));
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-app.get('/', (req, res) => {
-    res.status(200).json({ message: 'Chronosync API v1' });
+app.post('/usage', async (req, res) => {
+  const { window, duration } = req.body;
+  // TODO: Get user from request
+  const userId = 'some-user-id';
+
+  await prisma.usageLog.create({
+    data: {
+      time: new Date(),
+      user_id: userId,
+      app_name: window,
+      app_identifier: window,
+      device_type: 'desktop',
+      duration_seconds: Math.round(duration),
+    },
+  });
+
+  res.sendStatus(200);
 });
 
-// TODO: Importer et utiliser les routeurs (auth, usage, etc.)
+app.get('/', (req, res) => {
+  res.send('Hello, world!');
+});
 
-export default app;
+export { app };

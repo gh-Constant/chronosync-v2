@@ -4,20 +4,21 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vue-tsc --noEmit && vite build",
+    "dev": "vite dev",
+    "build:web": "vue-tsc --noEmit && vite build",
+    "build:tauri": "npm run build:web && tauri build",
     "preview": "vite preview",
-    "tauri": "tauri",
     "lint": "eslint . --ext .ts,.vue"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2",
-    "@tauri-apps/plugin-opener": "^2",
+    "@tauri-apps/api": "^2.9.0",
+    "@tauri-apps/plugin-opener": "^2.5.2",
     "vue": "^3.5.13"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2",
+    "@tauri-apps/cli": "^2.9.4",
     "@vitejs/plugin-vue": "^5.2.1",
+    "concurrently": "^8.2.0",
     "eslint": "^9.39.1",
     "typescript": "~5.6.2",
     "vite": "^6.0.3",

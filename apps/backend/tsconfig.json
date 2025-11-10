@@ -2,11 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "baseUrl": "./src"
+    "rootDir": "./src"
   },
-  "include": ["src/**/*.ts", "prisma/schema.prisma"],
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }
